@@ -1,25 +1,40 @@
 const express = require('express');
 const app = express();
+
 const sequelize = require('./config/database');
 
 const logger = require('./middlewares/logger');
 const validarApiKey = require('./middlewares/apiKey');
+const { validarToken } = require('./middlewares/auth');
 
 const peliculasRoutes = require('./routes/peliculas.routes');
+const authRoutes = require('./routes/auth.routes');
 
 app.use(express.json());
 
-// Middlewares globales
+// Middleware logger
 app.use(logger);
+
+// Middleware API KEY
 app.use(validarApiKey);
 
-// Rutas
+// Ruta login SIN token
+app.use('/api', authRoutes);
+
+// Middleware JWT
+app.use(validarToken);
+
+// Rutas protegidas
 app.use('/api', peliculasRoutes);
 
-// Inicializar DB
 sequelize.sync().then(() => {
+
   console.log('Base de datos conectada');
-  app.listen(3000, () => {
-    console.log('Servidor corriendo en http://localhost:3000');
-  });
+
+  const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`Servidor corriendo en puerto ${PORT}`);
+});
+
 });
